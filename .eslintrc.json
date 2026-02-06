@@ -1,0 +1,32 @@
+﻿{
+  "env": { "es6": true },
+  "parserOptions": { "ecmaVersion": 2021, "sourceType": "script" },
+  "globals": {
+    "SpreadsheetApp": "readonly",
+    "DriveApp": "readonly",
+    "DocumentApp": "readonly",
+    "HtmlService": "readonly",
+    "UrlFetchApp": "readonly",
+    "PropertiesService": "readonly",
+    "Utilities": "readonly",
+    "Logger": "readonly",
+    "Session": "readonly",
+    "MimeType": "readonly",
+    "Drive": "readonly",
+
+    "CONFIG": "readonly",
+    "TABLE_COLUMNS": "readonly",
+    "DOC_COLUMN_MAP": "readonly",
+    "PLACEHOLDER_ALIAS": "readonly",
+    "CRM_IMPORT_MAP": "readonly",
+    "SKIP_TEXT_REPLACE": "readonly"
+  },
+  "rules": {
+    "no-undef": "error",
+    "eqeqeq": "error",
+
+    "no-unused-vars": "off",
+    "no-var": "off",
+    "prefer-const": "off"
+  }
+}

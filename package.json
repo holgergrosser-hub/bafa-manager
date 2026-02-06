@@ -1,0 +1,28 @@
+﻿{
+    "name":  "bafa-manager",
+    "version":  "1.0.0",
+    "description":  "Dieses Repo enthÃ¤lt den Quellcode fÃ¼r das gemeinsame Google Apps Script Projekt (clasp).",
+    "main":  "index.js",
+    "scripts":  {
+                    "test":  "echo \"Error: no test specified\" \u0026\u0026 exit 1",
+                    "lint":  "eslint . --ext .gs,.js",
+                    "lint:fix":  "npm run lint -- --fix"
+                },
+    "repository":  {
+                       "type":  "git",
+                       "url":  "git+https://github.com/holgergrosser-hub/bafa-manager.git"
+                   },
+    "keywords":  [
+
+                 ],
+    "author":  "",
+    "license":  "ISC",
+    "type":  "commonjs",
+    "bugs":  {
+                 "url":  "https://github.com/holgergrosser-hub/bafa-manager/issues"
+             },
+    "homepage":  "https://github.com/holgergrosser-hub/bafa-manager#readme",
+    "devDependencies":  {
+                            "eslint":  "^8.57.0"
+                        }
+}
