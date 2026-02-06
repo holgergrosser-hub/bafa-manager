@@ -73,3 +73,21 @@ npm ci
 npm run lint
 npm test
 ```
+
+## CI Deploy (GitHub Actions)
+
+Damit GitHub Actions automatisch `clasp push` machen kann, musst du einmalig ein Secret setzen.
+
+1) Token exportieren (Windows):
+
+```powershell
+.\scripts\export-clasp-token.ps1
+```
+
+2) GitHub Secret anlegen:
+
+- Repository → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+- Name: `CLASP_TOKEN`
+- Value: kompletter JSON-Block aus dem Skript
+
+Danach pusht jeder Commit auf `main` automatisch nach Apps Script (Workflow: `Deploy to Apps Script`).

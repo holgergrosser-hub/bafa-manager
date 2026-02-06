@@ -1,0 +1,35 @@
+﻿name: Deploy to Apps Script
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+      - name: Install clasp
+        run: npm install -g @google/clasp
+
+      - name: Configure clasp auth
+        env:
+          CLASP_TOKEN: ${{ secrets.CLASP_TOKEN }}
+        run: |
+          if [ -z "$CLASP_TOKEN" ]; then
+            echo "Missing CLASP_TOKEN secret" >&2
+            exit 1
+          fi
+          mkdir -p ~/.config
+          echo "$CLASP_TOKEN" > ~/.clasprc.json
+
+      - name: Push to Apps Script
+        run: clasp push --force
