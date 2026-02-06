@@ -281,6 +281,19 @@ function copyMasterFolderWithRename(customerName, date, createArchive) {
     var sourceFolder = DriveApp.getFolderById(CONFIG.TEMPLATE_FOLDER_ID);
     var parentFolder = DriveApp.getFolderById(CONFIG.PARENT_FOLDER_ID);
 
+    // Guard: prevent accidental duplicate customer folders.
+    // Drive allows multiple folders with the same name; if the user clicks multiple times,
+    // this would create duplicates. We block if a folder already exists.
+    var existingIt = parentFolder.getFoldersByName(customerName);
+    if (existingIt.hasNext()) {
+      var existing = existingIt.next();
+      throw new Error(
+        'Kundenordner existiert bereits: "' + customerName + '"\n' +
+        'Bitte den vorhandenen Ordner löschen/umbenennen oder einen anderen Kundennamen verwenden.\n' +
+        'Link: https://drive.google.com/drive/folders/' + existing.getId()
+      );
+    }
+
     // Kundenordner erstellen
     var targetFolder = parentFolder.createFolder(customerName);
 

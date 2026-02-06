@@ -252,7 +252,7 @@
       <div class="checkbox-group">
         <label><input type="checkbox" id="copyArchive" checked> Archiv-Ordner erstellen</label>
       </div>
-      <button class="btn btn-success" onclick="copyMaster()">📁 Template kopieren</button>
+      <button class="btn btn-success" id="copyBtn" onclick="copyMaster()">📁 Template kopieren</button>
       <div id="copyStatus" class="status-box"></div>
     </div>
   </div>
@@ -623,6 +623,9 @@ function openCustomerSheet() {
 
 // ===== TEMPLATE KOPIEREN =====
 function copyMaster() {
+  var btn = document.getElementById('copyBtn');
+  if (btn && btn.disabled) return;
+
   var customer = document.getElementById('copyCustomer').value;
   var date = document.getElementById('copyDate').value;
   var archive = document.getElementById('copyArchive').checked;
@@ -631,6 +634,11 @@ function copyMaster() {
   if (!date) { showStatus('copyStatus', 'Bitte Datum eingeben', 'error'); return; }
   
   showStatus('copyStatus', '<span class="spinner"></span> BAFA Template wird kopiert...', 'info');
+  if (btn) {
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+    btn.style.pointerEvents = 'none';
+  }
   
   google.script.run.withSuccessHandler(function(result) {
     showStatus('copyStatus',
@@ -641,8 +649,20 @@ function copyMaster() {
       'success'
     );
     loadRecentFolders();
+
+    if (btn) {
+      btn.disabled = false;
+      btn.style.opacity = '';
+      btn.style.pointerEvents = '';
+    }
   }).withFailureHandler(function(error) {
     showStatus('copyStatus', '❌ ' + error, 'error');
+
+    if (btn) {
+      btn.disabled = false;
+      btn.style.opacity = '';
+      btn.style.pointerEvents = '';
+    }
   }).copyMasterFolderWithRename(customer, date, archive);
 }
 
