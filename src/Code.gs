@@ -18,7 +18,9 @@ const CRM_IMPORT_MAP = {
   'BS': 'Strasse',           // Straße
   'BW': 'PLZ_Ort',           // PLZ + Ort
   'CA': 'Ansprechpartner',   // Ansprechpartner
-  'I':  'email'              // E-Mail
+  'I':  'email',             // E-Mail
+  'C':  'Webpage',           // Webpage (laut Super Master: Spalte C)
+  'L':  'AUDITOR'            // Auditor (laut Super Master: Spalte L)
   // Weitere CRM-Spalten hier ergänzen:
   // 'XX': 'Webpage',
   // 'YY': 'Geltungsbereich',
