@@ -1,0 +1,11 @@
+﻿# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Node
+node_modules/
+*.log
+
+# clasp local auth/cache (optional)
+.clasp-dev/**

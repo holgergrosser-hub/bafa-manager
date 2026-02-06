@@ -1,0 +1,21 @@
+﻿# Never push repo metadata into Apps Script
+.git/**
+.github/**
+.vscode/**
+
+# Local tooling
+node_modules/**
+package.json
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+.eslintrc.json
+.prettierrc*
+.prettierignore
+
+# Docs / tests (keep in git, but don't push to Apps Script)
+README.md
+SCHNELLSTART.md
+BEST_PRACTICES.md
+BAFA_Entwicklungskonzept.md
+tests/**

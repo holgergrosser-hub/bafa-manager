@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #333; }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white; padding: 25px 30px; text-align: center;
+    }
+    .header h1 { font-size: 24px; margin-bottom: 5px; }
+    .header p { opacity: 0.9; font-size: 14px; }
+    
+    .tabs {
+      display: flex; background: #fff; border-bottom: 2px solid #e0e0e0;
+      padding: 0 20px; overflow-x: auto;
+    }
+    .tab {
+      padding: 14px 20px; cursor: pointer; border-bottom: 3px solid transparent;
+      font-weight: 500; white-space: nowrap; transition: all 0.2s; font-size: 14px;
+    }
+    .tab:hover { background: #f0f0f0; }
+    .tab.active { border-bottom-color: #667eea; color: #667eea; }
+    
+    .content { padding: 25px 30px; max-width: 900px; margin: 0 auto; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    .card {
+      background: #fff; border-radius: 10px; padding: 25px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px;
+    }
+    .card h3 { margin-bottom: 15px; color: #444; font-size: 18px; }
+    
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #555; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px;
+      font-size: 14px; transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: #667eea; outline: none; box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+    }
+    
+    .btn {
+      padding: 10px 22px; border: none; border-radius: 6px; font-size: 14px;
+      font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex;
+      align-items: center; gap: 6px;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .btn-primary { background: #667eea; color: #fff; }
+    .btn-success { background: #28a745; color: #fff; }
+    .btn-blue { background: #2196F3; color: #fff; }
+    .btn-purple { background: #764ba2; color: #fff; }
+    .btn-sm { padding: 6px 14px; font-size: 12px; }
+    
+    .status-box {
+      padding: 12px 16px; border-radius: 6px; margin-top: 15px; display: none; font-size: 14px;
+    }
+    .status-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .status-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .status-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    .status-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+    
+    .info-box {
+      background: #e8f4fd; border-left: 4px solid #2196F3; padding: 12px 16px;
+      margin-bottom: 20px; border-radius: 0 6px 6px 0; font-size: 13px; color: #1565c0;
+    }
+    
+    .workflow-steps {
+      display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .workflow-step {
+      flex: 1; min-width: 150px; padding: 12px; border-radius: 8px;
+      text-align: center; font-size: 13px; font-weight: 600;
+    }
+    .step-1 { background: #e3f2fd; color: #1565c0; border: 2px solid #1565c0; }
+    .step-2 { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
+    .step-3 { background: #f3e5f5; color: #6a1b9a; border: 2px solid #6a1b9a; }
+    .step-arrow { display: flex; align-items: center; font-size: 20px; color: #999; }
+    
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 15px; }
+    .checkbox-group label {
+      display: flex; align-items: center; gap: 6px; font-weight: normal;
+      padding: 8px 14px; background: #f8f9fa; border-radius: 6px; cursor: pointer; font-size: 14px;
+    }
+    .checkbox-group label:hover { background: #e9ecef; }
+    
+    .logo-preview { max-width: 200px; max-height: 100px; margin-top: 10px; border-radius: 4px; display: none; }
+    
+    .preview-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+    .preview-table th, .preview-table td { padding: 8px 12px; border: 1px solid #e0e0e0; text-align: left; }
+    .preview-table th { background: #f5f5f5; font-weight: 600; }
+    .preview-table .filled { color: #28a745; }
+    .preview-table .empty { color: #dc3545; }
+    
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #fff;
+      border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .customer-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px;
+      font-weight: 600; margin-left: 8px;
+    }
+    .badge-new { background: #fff3cd; color: #856404; }
+    .badge-docs { background: #d4edda; color: #155724; }
+    .badge-filled { background: #d1ecf1; color: #0c5460; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📋 BAFA Dokumente erstellen</h1>
+  <p>Zentrale Verwaltung für Ihre BAFA Beratungsdokumente</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('overview')">🏠 Übersicht</div>
+  <div class="tab" onclick="showTab('crm')">📥 CRM-Import</div>
+  <div class="tab" onclick="showTab('aiassign')">🤖 KI-Zuordnung</div>
+  <div class="tab" onclick="showTab('copy')">📁 Template kopieren</div>
+  <div class="tab" onclick="showTab('placeholders')">📝 Platzhalter</div>
+  <div class="tab" onclick="showTab('logo')">🖼️ Logo</div>
+  <div class="tab" onclick="showTab('batch')">⚡ Stapel</div>
+  <div class="tab" onclick="showTab('rename')">✏️ Umbenennen</div>
+  <div class="tab" onclick="showTab('pdf')">📑 PDF</div>
+  <div class="tab" onclick="showTab('split')">✂️ PDF teilen</div>
+</div>
+
+<div class="content">
+
+  <!-- ===== ÜBERSICHT ===== -->
+  <div id="tab-overview" class="tab-content active">
+    <div class="card">
+      <h3>Workflow</h3>
+      <div class="workflow-steps">
+        <div class="workflow-step step-1" onclick="showTab('crm')" style="cursor:pointer">
+          1️⃣ CRM-Import<br><small>Stammdaten holen</small>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="workflow-step step-2" onclick="showTab('aiassign')" style="cursor:pointer">
+          2️⃣ KI-Zuordnung<br><small>Kundendaten → Platzhalter</small>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="workflow-step step-3" onclick="showTab('copy')" style="cursor:pointer">
+          3️⃣ Template kopieren<br><small>Dokumente erstellen</small>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="workflow-step" onclick="showTab('placeholders')" style="cursor:pointer;background:#9333ea;color:#fff;padding:15px;border-radius:8px;text-align:center">
+          4️⃣ Platzhalter füllen<br><small>Daten in Dokumente</small>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="workflow-step" onclick="showTab('logo')" style="cursor:pointer;background:#dc2626;color:#fff;padding:15px;border-radius:8px;text-align:center">
+          5️⃣ Logo einfügen<br><small>+ PDFs erstellen</small>
+        </div>
+      </div>
+      <div class="info-box">
+        <strong>Ablauf:</strong>
+        1) CRM-Import → Stammdaten in Kundentabelle |
+        2) KI-Zuordnung → Freitext vom Kunden analysieren, Platzhalter zuordnen |
+        3) Template kopieren → Dokumente erstellen |
+        4) Platzhalter befüllen → Daten in alle Dokumente schreiben |
+        5) Logo + PDFs → Finalisieren
+      </div>
+      <button class="btn btn-blue" onclick="openCustomerSheet()">📋 Kundentabelle öffnen</button>
+    </div>
+    
+    <div class="card">
+      <h3>Letzte Kundenordner</h3>
+      <div id="recentFolders"><em>Wird geladen...</em></div>
+    </div>
+  </div>
+
+  <!-- ===== CRM IMPORT ===== -->
+  <div id="tab-crm" class="tab-content">
+    <div class="card">
+      <h3>📥 CRM-Import aus Super Master</h3>
+      <div class="info-box">
+        Importiert Stammdaten (Firma, Adresse, Kontakt, E-Mail) aus dem CRM Super Master in die BAFA Kundentabelle.<br>
+        Bestehende Kunden werden aktualisiert, neue werden automatisch angelegt.
+      </div>
+      <div class="form-group">
+        <label>🔍 Firma suchen:</label>
+        <input type="text" id="crmSearch" placeholder="Tippen zum Filtern..." oninput="filterCrmList()">
+      </div>
+      <div class="form-group">
+        <label>Firma aus CRM wählen:</label>
+        <select id="crmCompany" size="8" style="height:200px"><option disabled>Wird geladen...</option></select>
+      </div>
+      <button class="btn btn-primary" id="crmImportBtn" onclick="doCrmImport()">📥 In Kundentabelle importieren</button>
+      <div id="crmStatus" class="status-box"></div>
+    </div>
+  </div>
+
+  <!-- ===== KI-ZUORDNUNG ===== -->
+  <div id="tab-aiassign" class="tab-content">
+    <div class="card">
+      <h3>🤖 KI-Zuordnung: Freitext → Platzhalter</h3>
+      <div class="info-box">
+        <strong>So gehts:</strong> 1) Kunde wählen → 2) Kundendaten reinkopieren (E-Mail, PDF, Notizen...) → 3) Claude ordnet automatisch zu → 4) Prüfen & Speichern
+      </div>
+      <div class="form-group">
+        <label>Kunde auswählen:</label>
+        <select id="aiCompany"><option value="">Wird geladen...</option></select>
+      </div>
+      <div class="form-group">
+        <label>Kundendaten (Freitext):</label>
+        <textarea id="aiText" rows="8" placeholder="Hier alles reinkopieren was der Kunde geliefert hat...&#10;&#10;Z.B.:&#10;Firma Müller GmbH&#10;Hauptstr. 5, 90402 Nürnberg&#10;GF: Thomas Müller&#10;info@mueller.de&#10;www.mueller.de&#10;Gegründet 2005, 12 Mitarbeiter&#10;Druckerei / Digitaldruck&#10;ISO 9001"></textarea>
+      </div>
+      <button class="btn btn-primary" id="aiAnalyzeBtn" onclick="doAIAnalyze()">🤖 Claude analysieren lassen</button>
+      <button class="btn btn-muted" onclick="clearAI()">🗑️ Zurücksetzen</button>
+      <div id="aiStatus" class="status-box"></div>
+    </div>
+
+    <div id="aiResultCard" class="card" style="display:none">
+      <h3>📋 Zuordnung prüfen</h3>
+      <p style="font-size:13px;color:#666;margin-bottom:12px">
+        ✅ = wird gespeichert | <span style="background:#f0fdf4;padding:2px 6px;border-radius:3px">Grün</span> = neu von KI | <span style="background:#fef3c7;padding:2px 6px;border-radius:3px">Gelb</span> = überschreibt bestehend
+      </p>
+      <table class="preview-table" id="aiResultTable">
+        <thead>
+          <tr><th style="width:40px">✅</th><th>Feld</th><th>Aktuell</th><th>Neuer Wert</th></tr>
+        </thead>
+        <tbody id="aiResultBody"></tbody>
+      </table>
+      <div style="margin-top:15px;display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-muted" onclick="toggleAllAI(true)">Alle an</button>
+        <button class="btn btn-muted" onclick="toggleAllAI(false)">Alle aus</button>
+        <button class="btn btn-success" id="aiSaveBtn" onclick="doAISave()">💾 In Kundentabelle speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TEMPLATE KOPIEREN ===== -->
+  <div id="tab-copy" class="tab-content">
+    <div class="card">
+      <h3>📁 BAFA Template kopieren</h3>
+      <div class="info-box">
+        ℹ️ Kunde muss vorher in der Kundentabelle existieren (CRM-Import).<br>
+        Nach dem Kopieren werden alle Dokument-IDs automatisch in die Tabelle geschrieben.
+      </div>
+      <div class="form-group">
+        <label>Kunde auswählen:</label>
+        <select id="copyCustomer"><option value="">Wird geladen...</option></select>
+      </div>
+      <div class="form-group">
+        <label>Datum (Stand):</label>
+        <input type="date" id="copyDate" value="">
+      </div>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="copyArchive" checked> Archiv-Ordner erstellen</label>
+      </div>
+      <button class="btn btn-success" onclick="copyMaster()">📁 Template kopieren</button>
+      <div id="copyStatus" class="status-box"></div>
+    </div>
+  </div>
+
+  <!-- ===== PLATZHALTER ===== -->
+  <div id="tab-placeholders" class="tab-content">
+    <div class="card">
+      <h3>📝 Platzhalter in Dokumente schreiben</h3>
+      <div class="info-box">
+        Liest die Daten aus der Kundentabelle und ersetzt alle Platzhalter in den kopierten Dokumenten.<br>
+        <strong>Vorschau</strong> zeigt welche Felder gefüllt/leer sind, bevor die Ersetzung startet.
+      </div>
+      <div class="form-group">
+        <label>Kunde auswählen:</label>
+        <select id="phCustomer"><option value="">Wird geladen...</option></select>
+      </div>
+      <div style="display:flex; gap:10px; margin-bottom:15px;">
+        <button class="btn btn-blue" onclick="previewPlaceholders()">👁️ Vorschau</button>
+        <button class="btn btn-success" onclick="fillPlaceholders()">📝 Platzhalter befüllen</button>
+      </div>
+      <div id="phStatus" class="status-box"></div>
+      <div id="phPreview" style="display:none; margin-top:15px;"></div>
+    </div>
+  </div>
+
+  <!-- ===== LOGO ===== -->
+  <div id="tab-logo" class="tab-content">
+    <div class="card">
+      <h3>🖼️ Logo hochladen & in Dokumente einfügen</h3>
+      <div class="info-box">
+        Logo wird hochgeladen, in der Kundentabelle gespeichert und automatisch in alle verknüpften Dokumente eingefügt ({{LOGO_URL}} wird ersetzt).
+      </div>
+      <div class="form-group">
+        <label>Kunde auswählen:</label>
+        <select id="logoCompany" onchange="loadCustomerLogoInfo()">
+          <option value="">Wird geladen...</option>
+        </select>
+      </div>
+      <div id="logoCustomerInfo" style="display:none; margin-bottom:15px;">
+        <table class="preview-table">
+          <tr><td><strong>Ordner</strong></td><td id="logoInfoFolder">—</td></tr>
+          <tr><td><strong>Dokumente</strong></td><td id="logoInfoDocs">—</td></tr>
+          <tr><td><strong>Logo vorhanden</strong></td><td id="logoInfoHasLogo">—</td></tr>
+        </table>
+      </div>
+      <div class="form-group">
+        <label>Logo-Datei:</label>
+        <input type="file" id="logoFile" accept="image/*" onchange="previewLogo(this)">
+        <img id="logoPreview" class="logo-preview">
+      </div>
+      <button class="btn btn-primary" onclick="uploadLogo()">🖼️ Logo hochladen & einfügen</button>
+      <div id="logoStatus" class="status-box"></div>
+    </div>
+  </div>
+
+  <!-- ===== STAPEL ===== -->
+  <div id="tab-batch" class="tab-content">
+    <div class="card">
+      <h3>⚡ Stapelverarbeitung</h3>
+      <div class="info-box">Mehrere Aktionen für einen Kunden in einem Durchlauf.</div>
+      <div class="form-group">
+        <label>Kunde:</label>
+        <select id="batchCustomer"><option value="">Wird geladen...</option></select>
+      </div>
+      <div class="form-group">
+        <label>Datum:</label>
+        <input type="date" id="batchDate">
+      </div>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="batchCopy" checked> 📁 Template kopieren</label>
+        <label><input type="checkbox" id="batchFill"> 📝 Platzhalter befüllen</label>
+        <label><input type="checkbox" id="batchPdf"> 📑 PDFs erstellen</label>
+      </div>
+      <button class="btn btn-purple" onclick="runBatch()">⚡ Stapel starten</button>
+      <div id="batchStatus" class="status-box"></div>
+    </div>
+  </div>
+
+  <!-- ===== UMBENENNEN ===== -->
+  <div id="tab-rename" class="tab-content">
+    <div class="card">
+      <h3>✏️ Dateien umbenennen</h3>
+      <div class="form-group">
+        <label>Ordner-ID:</label>
+        <input type="text" id="renameFolderId" placeholder="Google Drive Ordner ID">
+      </div>
+      <div class="form-group">
+        <label>Suchen nach:</label>
+        <input type="text" id="renameSearch" placeholder="z.B. _Kunde_">
+      </div>
+      <div class="form-group">
+        <label>Ersetzen durch:</label>
+        <input type="text" id="renameReplace" placeholder="z.B. _Musterfirma_">
+      </div>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="renameRecursive" checked> Unterordner einbeziehen</label>
+      </div>
+      <button class="btn btn-primary" onclick="renameFiles()">✏️ Umbenennen</button>
+      <div id="renameStatus" class="status-box"></div>
+    </div>
+  </div>
+
+  <!-- ===== PDF ===== -->
+  <div id="tab-pdf" class="tab-content">
+    <div class="card">
+      <h3>📑 PDFs erstellen</h3>
+      <div class="form-group">
+        <label>Ordner-ID:</label>
+        <input type="text" id="pdfFolderId" placeholder="Google Drive Ordner ID">
+      </div>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="pdfDateFolder" checked> PDF-Ordner mit Datum</label>
+      </div>
+      <button class="btn btn-success" onclick="createPdfs()">📑 PDFs erstellen</button>
+      <div id="pdfStatus" class="status-box"></div>
+    </div>
+  </div>
+
+  <!-- ===== PDF SPLIT ===== -->
+  <div id="tab-split" class="tab-content">
+    <div class="card">
+      <h3>✂️ PDFs aufteilen</h3>
+      <div class="form-group">
+        <label>PDF URLs (eine pro Zeile):</label>
+        <textarea id="splitUrls" rows="5" placeholder="https://drive.google.com/file/d/..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="splitPdfs()">✂️ Aufteilen</button>
+      <div id="splitStatus" class="status-box"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== TAB NAVIGATION =====
+function showTab(tabId) {
+  document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(el) { el.classList.remove('active'); });
+  document.getElementById('tab-' + tabId).classList.add('active');
+  
+  var tabs = document.querySelectorAll('.tab');
+  var tabNames = ['overview','copy','placeholders','logo','batch','rename','pdf','split'];
+  for (var i = 0; i < tabNames.length; i++) {
+    if (tabNames[i] === tabId) { tabs[i].classList.add('active'); break; }
+  }
+}
+
+// ===== STATUS ANZEIGE =====
+function showStatus(elementId, message, type) {
+  var el = document.getElementById(elementId);
+  el.innerHTML = message;
+  el.className = 'status-box status-' + type;
+  el.style.display = 'block';
+}
+
+// ===== INITIALISIERUNG =====
+function init() {
+  loadCompanyNames();
+  loadCrmCompanies();
+  loadRecentFolders();
+  loadDefaultDate();
+}
+
+function loadCompanyNames() {
+  google.script.run.withSuccessHandler(function(names) {
+    var selects = ['copyCustomer', 'phCustomer', 'logoCompany', 'batchCustomer', 'aiCompany'];
+    selects.forEach(function(selId) {
+      var sel = document.getElementById(selId);
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Bitte wählen --</option>';
+      names.forEach(function(name) {
+        sel.innerHTML += '<option value="' + name + '">' + name + '</option>';
+      });
+    });
+  }).withFailureHandler(function(e) {
+    console.log('Fehler beim Laden der Kundennamen: ' + e);
+  }).getCompanyNames();
+}
+
+// ===== CRM IMPORT =====
+var allCrmCompanies = [];
+
+function loadCrmCompanies() {
+  google.script.run.withSuccessHandler(function(list) {
+    allCrmCompanies = list;
+    renderCrmList(list);
+  }).withFailureHandler(function(e) {
+    var sel = document.getElementById('crmCompany');
+    if (sel) sel.innerHTML = '<option disabled>Fehler: ' + e + '</option>';
+  }).getCrmCompanies();
+}
+
+function renderCrmList(arr) {
+  var sel = document.getElementById('crmCompany');
+  if (!sel) return;
+  sel.innerHTML = '';
+  arr.forEach(function(c) {
+    sel.innerHTML += '<option value="' + c + '">' + c + '</option>';
+  });
+  if (!arr.length) {
+    sel.innerHTML = '<option disabled>Keine Treffer</option>';
+  }
+}
+
+function filterCrmList() {
+  var q = document.getElementById('crmSearch').value.toLowerCase();
+  renderCrmList(allCrmCompanies.filter(function(c) {
+    return c.toLowerCase().indexOf(q) > -1;
+  }));
+}
+
+function doCrmImport() {
+  var company = document.getElementById('crmCompany').value;
+  if (!company) {
+    showStatus('crmStatus', 'Bitte Firma aus CRM wählen', 'error');
+    return;
+  }
+  document.getElementById('crmImportBtn').disabled = true;
+  showStatus('crmStatus', '<span class="spinner"></span> Importiere ' + company + '...', 'info');
+
+  google.script.run.withSuccessHandler(function(r) {
+    var msg = '✅ <strong>' + r.companyName + '</strong> ' + (r.isNew ? 'NEU angelegt' : 'aktualisiert');
+    msg += ' (' + r.importedFields + ' Felder) → Zeile ' + r.row;
+    showStatus('crmStatus', msg, 'success');
+    document.getElementById('crmImportBtn').disabled = false;
+    loadCompanyNames(); // Dropdowns aktualisieren
+  }).withFailureHandler(function(e) {
+    showStatus('crmStatus', '❌ ' + e, 'error');
+    document.getElementById('crmImportBtn').disabled = false;
+  }).importFromCrm(company);
+}
+
+// ===== KI-ZUORDNUNG =====
+var aiAssignments = [];
+
+function doAIAnalyze() {
+  var company = document.getElementById('aiCompany').value;
+  var text = document.getElementById('aiText').value.trim();
+  
+  if (!company) { showStatus('aiStatus', 'Bitte Kunde wählen', 'error'); return; }
+  if (!text || text.length < 10) { showStatus('aiStatus', 'Bitte Kundendaten eingeben (mind. 10 Zeichen)', 'error'); return; }
+
+  document.getElementById('aiAnalyzeBtn').disabled = true;
+  showStatus('aiStatus', '<span class="spinner"></span> Claude analysiert die Daten...', 'info');
+
+  google.script.run.withSuccessHandler(function(r) {
+    aiAssignments = r.assignments;
+    renderAIResults(r.assignments);
+    document.getElementById('aiResultCard').style.display = 'block';
+    showStatus('aiStatus', '✅ Analyse fertig! Bitte Zuordnung prüfen und speichern.', 'success');
+    document.getElementById('aiAnalyzeBtn').disabled = false;
+  }).withFailureHandler(function(e) {
+    showStatus('aiStatus', '❌ ' + e, 'error');
+    document.getElementById('aiAnalyzeBtn').disabled = false;
+  }).analyzeWithAI(text, company);
+}
+
+function renderAIResults(items) {
+  var tbody = document.getElementById('aiResultBody');
+  tbody.innerHTML = '';
+  
+  items.forEach(function(item, idx) {
+    if (!item.aiValue && !item.existingValue) return;
+    
+    var isNew = item.aiValue && !item.existingValue;
+    var isUpdate = item.aiValue && item.existingValue && item.aiValue !== item.existingValue;
+    var rowClass = isNew ? 'style="background:#f0fdf4"' : isUpdate ? 'style="background:#fef3c7"' : '';
+    
+    var row = '<tr ' + rowClass + '>';
+    row += '<td><input type="checkbox" id="ai_chk_' + idx + '" ' + (item.useAI ? 'checked' : '') + '></td>';
+    row += '<td><strong>' + item.column + '</strong><br><span style="font-size:11px;color:#666">' + item.description + '</span></td>';
+    row += '<td style="font-size:12px;color:#888">' + (item.existingValue || '—') + '</td>';
+    row += '<td><input type="text" id="ai_val_' + idx + '" value="' + escapeHtml(item.aiValue || item.existingValue || '') + '" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:13px"></td>';
+    row += '</tr>';
+    tbody.innerHTML += row;
+  });
+}
+
+function doAISave() {
+  var company = document.getElementById('aiCompany').value;
+  if (!company) { showStatus('aiStatus', 'Kein Kunde gewählt', 'error'); return; }
+
+  var toSave = [];
+  aiAssignments.forEach(function(item, idx) {
+    var chk = document.getElementById('ai_chk_' + idx);
+    var val = document.getElementById('ai_val_' + idx);
+    if (chk && chk.checked && val && val.value.trim()) {
+      toSave.push({ column: item.column, value: val.value.trim() });
+    }
+  });
+
+  if (!toSave.length) { showStatus('aiStatus', 'Keine Felder zum Speichern ausgewählt', 'error'); return; }
+
+  document.getElementById('aiSaveBtn').disabled = true;
+  showStatus('aiStatus', '<span class="spinner"></span> Speichere ' + toSave.length + ' Felder...', 'info');
+
+  google.script.run.withSuccessHandler(function(r) {
+    showStatus('aiStatus', '✅ <strong>' + r.savedFields + ' Felder</strong> für ' + r.companyName + ' gespeichert! (Zeile ' + r.row + ')', 'success');
+    document.getElementById('aiSaveBtn').disabled = false;
+    loadCompanyNames();
+  }).withFailureHandler(function(e) {
+    showStatus('aiStatus', '❌ ' + e, 'error');
+    document.getElementById('aiSaveBtn').disabled = false;
+  }).saveAIAssignments(company, toSave);
+}
+
+function toggleAllAI(state) {
+  aiAssignments.forEach(function(item, idx) {
+    var chk = document.getElementById('ai_chk_' + idx);
+    if (chk) chk.checked = state;
+  });
+}
+
+function clearAI() {
+  document.getElementById('aiText').value = '';
+  document.getElementById('aiResultCard').style.display = 'none';
+  document.getElementById('aiStatus').style.display = 'none';
+  aiAssignments = [];
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function loadRecentFolders() {
+  google.script.run.withSuccessHandler(function(folders) {
+    var container = document.getElementById('recentFolders');
+    if (!folders || !folders.length) {
+      container.innerHTML = '<em>Noch keine Kundenordner vorhanden.</em>';
+      return;
+    }
+    var html = '<table class="preview-table"><tr><th>Ordner</th><th>Erstellt</th><th>Aktion</th></tr>';
+    folders.forEach(function(f) {
+      var date = new Date(f.created).toLocaleDateString('de-DE');
+      html += '<tr><td>' + f.name + '</td><td>' + date + '</td>' +
+              '<td><a href="https://drive.google.com/drive/folders/' + f.id + '" target="_blank" class="btn btn-sm btn-blue">📂 Öffnen</a></td></tr>';
+    });
+    html += '</table>';
+    container.innerHTML = html;
+  }).getRecentFolders();
+}
+
+function loadDefaultDate() {
+  google.script.run.withSuccessHandler(function(date) {
+    document.getElementById('copyDate').value = date;
+    document.getElementById('batchDate').value = date;
+  }).withFailureHandler(function() {
+    // Fallback: +3 Werktage client-seitig
+    var d = new Date();
+    var added = 0;
+    while (added < 3) {
+      d.setDate(d.getDate() + 1);
+      if (d.getDay() !== 0 && d.getDay() !== 6) added++;
+    }
+    var dateStr = d.toISOString().split('T')[0];
+    document.getElementById('copyDate').value = dateStr;
+    document.getElementById('batchDate').value = dateStr;
+  }).getDefaultDate();
+}
+
+function openCustomerSheet() {
+  google.script.run.withSuccessHandler(function(sheetId) {
+    window.open('https://docs.google.com/spreadsheets/d/' + sheetId, '_blank');
+  }).withFailureHandler(function(e) {
+    alert('Kundentabelle nicht gefunden. Bitte zuerst über Menü erstellen.\n\n' + e);
+  }).getCustomerSheetId();
+}
+
+// ===== TEMPLATE KOPIEREN =====
+function copyMaster() {
+  var customer = document.getElementById('copyCustomer').value;
+  var date = document.getElementById('copyDate').value;
+  var archive = document.getElementById('copyArchive').checked;
+  
+  if (!customer) { showStatus('copyStatus', 'Bitte Kunde auswählen', 'error'); return; }
+  if (!date) { showStatus('copyStatus', 'Bitte Datum eingeben', 'error'); return; }
+  
+  showStatus('copyStatus', '<span class="spinner"></span> BAFA Template wird kopiert...', 'info');
+  
+  google.script.run.withSuccessHandler(function(result) {
+    showStatus('copyStatus',
+      '✅ Erfolgreich kopiert!<br>' +
+      '📁 ' + result.totalFiles + ' Dateien kopiert<br>' +
+      '✏️ ' + result.renamedFiles + ' Dateien umbenannt<br>' +
+      '📋 Dokument-IDs in Tabelle eingetragen',
+      'success'
+    );
+    loadRecentFolders();
+  }).withFailureHandler(function(error) {
+    showStatus('copyStatus', '❌ ' + error, 'error');
+  }).copyMasterFolderWithRename(customer, date, archive);
+}
+
+// ===== PLATZHALTER =====
+function previewPlaceholders() {
+  var customer = document.getElementById('phCustomer').value;
+  if (!customer) { showStatus('phStatus', 'Bitte Kunde auswählen', 'error'); return; }
+  
+  showStatus('phStatus', '<span class="spinner"></span> Lade Vorschau...', 'info');
+  
+  google.script.run.withSuccessHandler(function(result) {
+    document.getElementById('phStatus').style.display = 'none';
+    
+    var html = '<h4 style="margin-bottom:8px">' + result.customerName +
+               ' <span style="color:#666;font-size:13px">(' + result.documentCount + ' Dokumente verknüpft)</span></h4>';
+    
+    html += '<table class="preview-table"><tr><th>Platzhalter</th><th>Spalte</th><th>Wert</th></tr>';
+    
+    result.filled.forEach(function(f) {
+      html += '<tr><td>' + f.placeholder + '</td><td>' + f.column + '</td><td class="filled">✓ ' + f.value + '</td></tr>';
+    });
+    result.empty.forEach(function(e) {
+      html += '<tr><td>' + e.placeholder + '</td><td>' + e.column + '</td><td class="empty">— leer</td></tr>';
+    });
+    
+    html += '</table>';
+    
+    if (result.empty.length > 0) {
+      html += '<div class="status-box status-warning" style="display:block;margin-top:10px">' +
+              '⚠️ ' + result.empty.length + ' Platzhalter ohne Wert – diese bleiben unverändert im Dokument.</div>';
+    }
+    
+    var container = document.getElementById('phPreview');
+    container.innerHTML = html;
+    container.style.display = 'block';
+    
+  }).withFailureHandler(function(error) {
+    showStatus('phStatus', '❌ ' + error, 'error');
+  }).previewPlaceholdersForCustomer(customer);
+}
+
+function fillPlaceholders() {
+  var customer = document.getElementById('phCustomer').value;
+  if (!customer) { showStatus('phStatus', 'Bitte Kunde auswählen', 'error'); return; }
+  
+  if (!confirm('Platzhalter für "' + customer + '" in alle Dokumente schreiben?\n\nDies kann nicht rückgängig gemacht werden!')) return;
+  
+  showStatus('phStatus', '<span class="spinner"></span> Platzhalter werden befüllt...', 'info');
+  
+  google.script.run.withSuccessHandler(function(result) {
+    var msg = '✅ <strong>' + result.processedDocs + ' Dokumente</strong> verarbeitet<br>' +
+              '📝 ' + result.totalPlaceholders + ' Platzhalter ersetzt';
+    
+    if (result.errors.length > 0) {
+      msg += '<br><br>⚠️ ' + result.errors.length + ' Fehler:<br>' +
+             result.errors.map(function(e) { return '• ' + e; }).join('<br>');
+    }
+    
+    showStatus('phStatus', msg, result.errors.length > 0 ? 'warning' : 'success');
+    
+  }).withFailureHandler(function(error) {
+    showStatus('phStatus', '❌ ' + error, 'error');
+  }).fillPlaceholdersForCustomer(customer);
+}
+
+// ===== LOGO =====
+function previewLogo(input) {
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var img = document.getElementById('logoPreview');
+      img.src = e.target.result;
+      img.style.display = 'block';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function loadCustomerLogoInfo() {
+  var company = document.getElementById('logoCompany').value;
+  var infoDiv = document.getElementById('logoCustomerInfo');
+  
+  if (!company) {
+    infoDiv.style.display = 'none';
+    return;
+  }
+  
+  google.script.run.withSuccessHandler(function(info) {
+    document.getElementById('logoInfoFolder').innerHTML = info.folderId
+      ? '<a href="https://drive.google.com/drive/folders/' + info.folderId + '" target="_blank">📁 Ordner öffnen</a>'
+      : '<span style="color:#dc3545">⚠️ Kein Ordner – bitte zuerst Template kopieren</span>';
+    document.getElementById('logoInfoDocs').textContent = info.documentCount + ' Dokumente verknüpft';
+    document.getElementById('logoInfoHasLogo').innerHTML = info.hasLogo
+      ? '<span style="color:#28a745">✓ Ja (wird überschrieben)</span>'
+      : '<span style="color:#666">Nein</span>';
+    infoDiv.style.display = 'block';
+  }).getCustomerInfo(company);
+}
+
+function uploadLogo() {
+  var company = document.getElementById('logoCompany').value;
+  var fileInput = document.getElementById('logoFile');
+  
+  if (!company || !fileInput.files[0]) {
+    showStatus('logoStatus', 'Bitte Kunde und Logo-Datei auswählen', 'error');
+    return;
+  }
+  
+  showStatus('logoStatus', '<span class="spinner"></span> Logo wird hochgeladen und in Dokumente eingefügt...', 'info');
+  
+  var reader = new FileReader();
+  reader.onloadend = function() {
+    google.script.run.withSuccessHandler(function(result) {
+      var msg = '✅ Logo hochgeladen und gespeichert!<br>';
+      msg += '📄 ' + result.processedDocs + ' Dokumente mit Logo aktualisiert';
+      
+      if (result.errors && result.errors.length > 0) {
+        msg += '<br><br>⚠️ ' + result.errors.length + ' Fehler:<br>';
+        msg += result.errors.map(function(e) { return '• ' + e; }).join('<br>');
+      }
+      
+      showStatus('logoStatus', msg, result.errors && result.errors.length > 0 ? 'warning' : 'success');
+      loadCustomerLogoInfo();
+    }).withFailureHandler(function(error) {
+      showStatus('logoStatus', '❌ ' + error, 'error');
+    }).uploadLogoAndProcessDocuments(reader.result, company);
+  };
+  reader.readAsDataURL(fileInput.files[0]);
+}
+
+// ===== STAPELVERARBEITUNG =====
+function runBatch() {
+  var customer = document.getElementById('batchCustomer').value;
+  var date = document.getElementById('batchDate').value;
+  
+  if (!customer) { showStatus('batchStatus', 'Bitte Kunde auswählen', 'error'); return; }
+  
+  var actions = {
+    copyMaster: document.getElementById('batchCopy').checked,
+    fillPlaceholders: document.getElementById('batchFill').checked,
+    createPdf: document.getElementById('batchPdf').checked
+  };
+  
+  if (!actions.copyMaster && !actions.fillPlaceholders && !actions.createPdf) {
+    showStatus('batchStatus', 'Bitte mindestens eine Aktion auswählen', 'error');
+    return;
+  }
+  
+  showStatus('batchStatus', '<span class="spinner"></span> Stapelverarbeitung läuft...', 'info');
+  
+  google.script.run.withSuccessHandler(function(result) {
+    showStatus('batchStatus', '✅ Fertig!' + result.summary, 'success');
+    loadRecentFolders();
+  }).withFailureHandler(function(error) {
+    showStatus('batchStatus', '❌ ' + error, 'error');
+  }).runBatchProcess(actions, customer, date);
+}
+
+// ===== UMBENENNEN =====
+function renameFiles() {
+  var folderId = document.getElementById('renameFolderId').value;
+  var search = document.getElementById('renameSearch').value;
+  var replace = document.getElementById('renameReplace').value;
+  var recursive = document.getElementById('renameRecursive').checked;
+  
+  if (!folderId || !search) {
+    showStatus('renameStatus', 'Bitte Ordner-ID und Suchmuster eingeben', 'error');
+    return;
+  }
+  
+  showStatus('renameStatus', '<span class="spinner"></span> Umbenennung läuft...', 'info');
+  
+  google.script.run.withSuccessHandler(function(result) {
+    showStatus('renameStatus', result.success ? ('✅ ' + result.message) : ('❌ ' + result.message),
+              result.success ? 'success' : 'error');
+  }).withFailureHandler(function(error) {
+    showStatus('renameStatus', '❌ ' + error, 'error');
+  }).renameFilesFromUI(folderId, search, replace, { recursive: recursive });
+}
+
+// ===== PDF =====
+function createPdfs() {
+  var folderId = document.getElementById('pdfFolderId').value;
+  if (!folderId) { showStatus('pdfStatus', 'Bitte Ordner-ID eingeben', 'error'); return; }
+  
+  showStatus('pdfStatus', '<span class="spinner"></span> PDFs werden erstellt...', 'info');
+  
+  google.script.run.withSuccessHandler(function(result) {
+    showStatus('pdfStatus', '✅ ' + result.pdfCount + ' von ' + result.fileCount + ' Dateien als PDF erstellt!', 'success');
+  }).withFailureHandler(function(error) {
+    showStatus('pdfStatus', '❌ ' + error, 'error');
+  }).convertToPDF(folderId, document.getElementById('pdfDateFolder').checked);
+}
+
+// ===== PDF SPLIT =====
+function splitPdfs() {
+  var urls = document.getElementById('splitUrls').value.trim().split('\n').filter(function(u) { return u.trim(); });
+  if (!urls.length) { showStatus('splitStatus', 'Bitte URLs eingeben', 'error'); return; }
+  
+  showStatus('splitStatus', '<span class="spinner"></span> PDFs werden aufgeteilt...', 'info');
+  
+  google.script.run.withSuccessHandler(function(result) {
+    showStatus('splitStatus', '✅ ' + result.success + ' PDFs aufgeteilt!<br>' +
+              result.details.join('<br>'), result.errors > 0 ? 'warning' : 'success');
+  }).withFailureHandler(function(error) {
+    showStatus('splitStatus', '❌ ' + error, 'error');
+  }).splitMultiplePDFs(urls);
+}
+
+// Start
+init();
+</script>
+</body>
+</html>
