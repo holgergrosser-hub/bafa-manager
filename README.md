@@ -91,3 +91,9 @@ Damit GitHub Actions automatisch `clasp push` machen kann, musst du einmalig ein
 - Value: kompletter JSON-Block aus dem Skript
 
 Danach pusht jeder Commit auf `main` automatisch nach Apps Script (Workflow: `Deploy to Apps Script`).
+
+### Secret setzen per CLI (Alternative)
+
+```powershell
+Get-Content "$HOME\.clasprc.json" -Raw | gh secret set CLASP_TOKEN -R holgergrosser-hub/bafa-manager --app actions
+```

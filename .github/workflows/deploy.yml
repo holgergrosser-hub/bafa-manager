@@ -5,11 +5,16 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: apps-script-deploy
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      CLASP_TOKEN: ${{ secrets.CLASP_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -27,6 +32,8 @@ jobs:
         run: npm install -g @google/clasp
 
       - name: Verify CLASP_TOKEN present
+        env:
+          CLASP_TOKEN: ${{ secrets.CLASP_TOKEN }}
         run: |
           if [ -z "$CLASP_TOKEN" ]; then
             echo "CLASP_TOKEN not available in workflow (check repo secret + permissions)" >&2
@@ -35,6 +42,8 @@ jobs:
           echo "CLASP_TOKEN present"
 
       - name: Configure clasp auth
+        env:
+          CLASP_TOKEN: ${{ secrets.CLASP_TOKEN }}
         run: |
           printf '%s' "$CLASP_TOKEN" > ~/.clasprc.json
 
