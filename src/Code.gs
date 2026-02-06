@@ -17,7 +17,6 @@ const CRM_IMPORT_MAP = {
   'A':  'companyName',       // Firmenname
   'BS': 'Strasse',           // Straße
   'BW': 'PLZ_Ort',           // PLZ + Ort
-  'CA': 'Ansprechpartner',   // Ansprechpartner
   'I':  'email',             // E-Mail
   'C':  'Webpage',           // Webpage (laut Super Master: Spalte C)
   'L':  'AUDITOR'            // Auditor (laut Super Master: Spalte L)
@@ -34,8 +33,7 @@ const TABLE_COLUMNS = {
   crm: [
     'companyName',
     'Strasse',
-    'PLZ_Ort',
-    'Ansprechpartner'
+    'PLZ_Ort'
   ],
 
   // Weitere Platzhalter für Dokumente (erweiterbar)
@@ -107,7 +105,6 @@ const PLACEHOLDER_ALIAS = {
   'companyName':             '{{FIRMENNAME}}',
   'Strasse':                 '{{Straße}}',
   'PLZ_Ort':                 '{{PLZ_Ort}}',
-  'Ansprechpartner':         '{{Ansprechpartner}}',
   'email':                   '{{email}}',
   'Webpage':                 '{{Webpage}}',
   'Gruenderdatum':           '{{Gruenderdatum}}',
@@ -906,13 +903,6 @@ function importFromCrm(companyName) {
     }
 
     
-    var plzCandidate = importedValues['Ansprechpartner'] || '';
-    var ortCandidate = importedValues['PLZ_Ort'] || '';
-    if (/^\d{4,5}$/.test(plzCandidate) && ortCandidate && !/\d/.test(ortCandidate)) {
-      importedValues['PLZ_Ort'] = (plzCandidate + ' ' + ortCandidate).trim();
-      importedValues['Ansprechpartner'] = '';
-    }
-
     Logger.log('CRM-Daten: ' + JSON.stringify(importedValues));
 
     // 3. In BAFA Kundentabelle schreiben

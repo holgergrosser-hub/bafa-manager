@@ -15,7 +15,7 @@ function run() {
   const src = fs.readFileSync(codePath, 'utf8');
 
   const crmMap = extractConstObject(src, 'CRM_IMPORT_MAP');
-  const mustMapTo = ['companyName', 'Strasse', 'PLZ_Ort', 'Ansprechpartner', 'email'];
+  const mustMapTo = ['companyName', 'Strasse', 'PLZ_Ort', 'email'];
   const values = new Set(Object.values(crmMap));
 
   for (const col of mustMapTo) {
