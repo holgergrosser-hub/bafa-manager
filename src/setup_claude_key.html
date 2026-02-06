@@ -27,7 +27,7 @@
   <body>
     <div class="wrap">
       <div class="card">
-        <h1>🔑 Claude API-Key einrichten</h1>
+        <h1>Claude API-Key einrichten</h1>
         <p>
           Der Key wird in den Script Properties gespeichert und nicht im Sheet.
           Format: <span class="mono">sk-ant-...</span>
@@ -61,18 +61,24 @@
 
       function refreshStatus() {
         setCurrent('Lade Status...', '')
+        const timeout = setTimeout(() => {
+          setCurrent('Status laedt sehr lange. Falls ein Berechtigungs-Popup offen ist: bitte bestaetigen und dann nochmal versuchen.', 'err')
+        }, 15000)
+
         google.script.run
           .withSuccessHandler((s) => {
+            clearTimeout(timeout)
             if (s && s.set) {
-              setCurrent('Key ist gesetzt (…' + (s.tail || '') + ')', 'ok')
+              setCurrent('Key ist gesetzt (...' + (s.tail || '') + ')', 'ok')
             } else {
               setCurrent('Key ist noch nicht gesetzt', 'err')
             }
           })
           .withFailureHandler((e) => {
+            clearTimeout(timeout)
             setCurrent('Status konnte nicht geladen werden: ' + (e && e.message ? e.message : e), 'err')
           })
-          .getClaudeApiKeyStatus_()
+          .getClaudeApiKeyStatus()
       }
 
       function saveKey() {
@@ -86,21 +92,45 @@
         btn.disabled = true
         setMsg('Speichere...', '')
 
+        const timeout = setTimeout(() => {
+          setMsg('Das Speichern dauert sehr lange. Falls ein Google-Berechtigungsdialog offen ist: bitte bestaetigen. Danach erneut auf "Speichern" klicken.', 'err')
+          btn.disabled = false
+        }, 20000)
+
         google.script.run
           .withSuccessHandler((res) => {
-            setMsg('✅ Gespeichert (…' + (res && res.tail ? res.tail : '') + ')', 'ok')
+            clearTimeout(timeout)
+            setMsg('Gespeichert (...' + (res && res.tail ? res.tail : '') + ')', 'ok')
             document.getElementById('key').value = ''
+            refreshStatus()
+            btn.disabled = false
+          })
+          .withFailureHandler((e) => {
+            clearTimeout(timeout)
+            setMsg('Fehler: ' + (e && e.message ? e.message : e), 'err')
+            btn.disabled = false
+          })
+          .setClaudeApiKey(key)
+      }
+
+      function bootstrap() {
+        if (!(window.google && google.script && google.script.run)) {
+          setCurrent('Fehler: google.script.run ist nicht verfuegbar. Oeffne diese Seite als Apps-Script Web-App (/exec), nicht als Vorschau/Download.', 'err')
+          return
+        }
+
+        // Quick sanity check so we can show a useful error early.
+        google.script.run
+          .withSuccessHandler(() => {
             refreshStatus()
           })
           .withFailureHandler((e) => {
-            setMsg('❌ Fehler: ' + (e && e.message ? e.message : e), 'err')
+            setCurrent('Server nicht erreichbar: ' + (e && e.message ? e.message : e), 'err')
           })
-          .setClaudeApiKey_(key)
-          
-        setTimeout(() => { btn.disabled = false }, 250)
+          .ping()
       }
 
-      refreshStatus()
+      bootstrap()
     </script>
   </body>
 </html>

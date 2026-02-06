@@ -16,7 +16,8 @@ const CONFIG = {
 const CRM_IMPORT_MAP = {
   'A':  'companyName',       // Firmenname
   'BS': 'Strasse',           // Straße
-  'CA': 'PLZ_Ort',           // PLZ (laut Super Master: Spalte CA)
+  'CA': 'PLZ_Ort',           // PLZ (laut Super Master: Spalte CA) – Ort wird separat gezogen
+  'BW': 'Ort',               // Ort (laut Super Master: Spalte BW)
   'I':  'email',             // E-Mail
   'C':  'Webpage',           // Webpage (laut Super Master: Spalte C)
   'L':  'AUDITOR'            // Auditor (laut Super Master: Spalte L)
@@ -33,7 +34,8 @@ const TABLE_COLUMNS = {
   crm: [
     'companyName',
     'Strasse',
-    'PLZ_Ort'
+    'PLZ_Ort',
+    'Ort'
   ],
 
   // Weitere Platzhalter für Dokumente (erweiterbar)
@@ -104,7 +106,10 @@ const SKIP_TEXT_REPLACE = ['doc_05_Massnahmenplan'];
 const PLACEHOLDER_ALIAS = {
   'companyName':             '{{FIRMENNAME}}',
   'Strasse':                 '{{Straße}}',
+  // Abwärtskompatibel: viele Templates nutzen {{PLZ_Ort}} noch.
+  // Wir befüllen es automatisch aus PLZ + Ort, falls keine Spalte existiert.
   'PLZ_Ort':                 '{{PLZ_Ort}}',
+  'Ort':                     '{{Ort}}',
   'email':                   '{{email}}',
   'Webpage':                 '{{Webpage}}',
   'Gruenderdatum':           '{{Gruenderdatum}}',
@@ -143,6 +148,11 @@ function getClaudeApiKeyStatus_() {
   };
 }
 
+// Public wrappers for HtmlService (avoid calling underscore-suffixed functions from the client)
+function getClaudeApiKeyStatus() {
+  return getClaudeApiKeyStatus_();
+}
+
 function setClaudeApiKey_(key) {
   var k = (key == null) ? '' : String(key).trim();
   if (!k) throw new Error('Key fehlt');
@@ -150,6 +160,14 @@ function setClaudeApiKey_(key) {
 
   PropertiesService.getScriptProperties().setProperty('CLAUDE_API_KEY', k);
   return { success: true, tail: k.slice(-8) };
+}
+
+function setClaudeApiKey(key) {
+  return setClaudeApiKey_(key);
+}
+
+function ping() {
+  return { ok: true, ts: new Date().toISOString() };
 }
 
 // ===== KUNDENTABELLE ERSTELLEN =====
@@ -438,6 +456,26 @@ function fillPlaceholdersForCustomer(customerName) {
       var placeholder = PLACEHOLDER_ALIAS[colName] || ('{{' + colName + '}}');
       replacements[placeholder] = String(value);
     });
+
+    // {{PLZ_Ort}} konsistent als "PLZ Ort" befüllen:
+    // - Wenn Spalte PLZ_Ort existiert und Ort existiert, kombinieren.
+    // - Wenn nur eines existiert, dieses nutzen.
+    // - Wenn PLZ_Ort bereits Ort enthält, nicht doppeln.
+    (function ensurePlzOrt() {
+      var plzOrtIdx = headers.indexOf('PLZ_Ort');
+      var ortIdx = headers.indexOf('Ort');
+      var plzOrtVal = (plzOrtIdx !== -1 && rowData[plzOrtIdx]) ? String(rowData[plzOrtIdx]).trim() : '';
+      var ortVal = (ortIdx !== -1 && rowData[ortIdx]) ? String(rowData[ortIdx]).trim() : '';
+      if (!plzOrtVal && !ortVal) return;
+
+      var combined = plzOrtVal;
+      if (ortVal) {
+        var containsOrt = plzOrtVal && plzOrtVal.toLowerCase().indexOf(ortVal.toLowerCase()) !== -1;
+        combined = containsOrt ? plzOrtVal : ((plzOrtVal ? (plzOrtVal + ' ') : '') + ortVal);
+      }
+      combined = combined.trim();
+      if (combined) replacements['{{PLZ_Ort}}'] = combined;
+    })();
 
     // Automatische Werte falls leer
     if (!replacements['{{Aktuelles_Jahr}}']) {
@@ -928,6 +966,20 @@ function importFromCrm(companyName) {
       importedValues[targetCol] = cellValue ? cellValue.toString().trim() : '';
     }
 
+    // Fallback: Manche Super-Master-Versionen haben den Ort auch in Spalte D.
+    if (!importedValues.Ort) {
+      var ortFallback = crmSheet.getRange('D' + crmRowIndex).getDisplayValue();
+      importedValues.Ort = ortFallback ? String(ortFallback).trim() : '';
+    }
+
+    // PLZ_Ort als "PLZ Ort" kombinieren (PLZ kommt aus CA in importedValues.PLZ_Ort)
+    if (importedValues.PLZ_Ort || importedValues.Ort) {
+      var plzOnly = importedValues.PLZ_Ort ? String(importedValues.PLZ_Ort).trim() : '';
+      var ortOnly = importedValues.Ort ? String(importedValues.Ort).trim() : '';
+      if (plzOnly && ortOnly) importedValues.PLZ_Ort = (plzOnly + ' ' + ortOnly).trim();
+      else importedValues.PLZ_Ort = (plzOnly || ortOnly).trim();
+    }
+
     
     Logger.log('CRM-Daten: ' + JSON.stringify(importedValues));
 
@@ -1026,6 +1078,7 @@ function analyzeWithAI(freeText, companyName) {
       'companyName': 'Firmenname (z.B. Müller GmbH)',
       'Strasse': 'Straße und Hausnummer',
       'PLZ_Ort': 'Postleitzahl und Ort (z.B. 90402 Nürnberg)',
+      'Ort': 'Ort / Stadt (z.B. Nürnberg)',
       'Ansprechpartner': 'Kontaktperson / Geschäftsführer',
       'email': 'E-Mail-Adresse',
       'Webpage': 'Website-URL',
