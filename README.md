@@ -65,3 +65,11 @@ Oder per Skript (Windows PowerShell):
 ## Team-Hinweis (gleiches Script für alle)
 
 `.clasp.json` ist **Teil des Repos**, damit alle Entwickler gegen dasselbe Apps-Script-Projekt arbeiten.
+
+## Lint & Tests
+
+```bash
+npm ci
+npm run lint
+npm test
+```
