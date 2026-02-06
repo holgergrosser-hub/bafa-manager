@@ -16,7 +16,7 @@ const CONFIG = {
 const CRM_IMPORT_MAP = {
   'A':  'companyName',       // Firmenname
   'BS': 'Strasse',           // Straße
-  'BW': 'PLZ_Ort',           // PLZ + Ort
+  'CA': 'PLZ_Ort',           // PLZ (laut Super Master: Spalte CA)
   'I':  'email',             // E-Mail
   'C':  'Webpage',           // Webpage (laut Super Master: Spalte C)
   'L':  'AUDITOR'            // Auditor (laut Super Master: Spalte L)
@@ -898,7 +898,8 @@ function importFromCrm(companyName) {
     var importedValues = {};
     for (var colLetter in CRM_IMPORT_MAP) {
       var targetCol = CRM_IMPORT_MAP[colLetter];
-      var cellValue = crmSheet.getRange(colLetter + crmRowIndex).getValue();
+      // DisplayValue bewahrt Formatierungen (z.B. PLZ mit führenden Nullen)
+      var cellValue = crmSheet.getRange(colLetter + crmRowIndex).getDisplayValue();
       importedValues[targetCol] = cellValue ? cellValue.toString().trim() : '';
     }
 
