@@ -328,7 +328,7 @@ function copyMasterFolderWithRename(customerName, date, createArchive) {
 
     // In Kundentabelle eintragen
     try {
-      writeDocumentIdsToSheet(customerName, targetFolder.getId(), copiedFiles);
+      writeDocumentIdsToSheet(customerName, targetFolder.getId(), copiedFiles, date);
     } catch (sheetError) {
       Logger.log('Tabellen-Warnung: ' + sheetError.toString());
     }
@@ -367,7 +367,7 @@ function copyFolderWithTracking(source, target, copiedFiles) {
 /**
  * Schreibt Ordner-ID und Dokument-IDs in die Kundenzeile der Tabelle
  */
-function writeDocumentIdsToSheet(customerName, folderId, copiedFiles) {
+function writeDocumentIdsToSheet(customerName, folderId, copiedFiles, documentDate) {
   var sheet = getCustomerSheet();
   var data = sheet.getDataRange().getValues();
   var headers = data[0];
@@ -393,6 +393,18 @@ function writeDocumentIdsToSheet(customerName, folderId, copiedFiles) {
   var folderIdCol   = headers.indexOf('folderID');
   var folderLinkCol = headers.indexOf('folderLink');
   var createdCol    = headers.indexOf('createdDate');
+
+  // Optional: Dokumentdatum in Datum_Heute setzen (nur wenn leer)
+  var datumHeuteCol = headers.indexOf('Datum_Heute');
+  if (datumHeuteCol !== -1) {
+    var existingDatumHeute = sheet.getRange(rowIndex, datumHeuteCol + 1).getValue();
+    if (!existingDatumHeute) {
+      var parsed = parseDateFromAny_(documentDate);
+      if (parsed) {
+        sheet.getRange(rowIndex, datumHeuteCol + 1).setValue(formatGermanDate_(parsed));
+      }
+    }
+  }
 
   if (folderIdCol !== -1) sheet.getRange(rowIndex, folderIdCol + 1).setValue(folderId);
   if (folderLinkCol !== -1) {
@@ -495,6 +507,34 @@ function fillPlaceholdersForCustomer(customerName) {
     if (!replacements['{{Datum_Heute}}']) {
       replacements['{{Datum_Heute}}'] = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd.MM.yyyy');
     }
+
+    // Berechnete Platzhalter
+    // {{AUDITDATUM}} = 2 Werktage nach Dokumentdatum (Basis: Datum_Heute)
+    // {{AUDITDATUM plus 12 Monate}} = 1 Monat nach 12 Monaten nach AUDITDATUM (= AUDITDATUM + 13 Monate)
+    // {{Vorjahr}} = Vorjahr des Dokumentdatums
+    (function ensureComputedPlaceholders() {
+      var baseDate = null;
+
+      // Priorität: Datum_Heute aus Tabelle/Replacements
+      var datumHeuteVal = replacements['{{Datum_Heute}}'];
+      baseDate = parseDateFromAny_(datumHeuteVal);
+      if (!baseDate) baseDate = new Date();
+
+      if (!replacements['{{Vorjahr}}']) {
+        replacements['{{Vorjahr}}'] = String(baseDate.getFullYear() - 1);
+      }
+
+      if (!replacements['{{AUDITDATUM}}']) {
+        var auditDate = addBusinessDays_(baseDate, 2);
+        replacements['{{AUDITDATUM}}'] = formatGermanDate_(auditDate);
+      }
+
+      if (!replacements['{{AUDITDATUM plus 12 Monate}}']) {
+        var audit = parseDateFromAny_(replacements['{{AUDITDATUM}}']) || addBusinessDays_(baseDate, 2);
+        var plus13 = addMonthsClamped_(audit, 13);
+        replacements['{{AUDITDATUM plus 12 Monate}}'] = formatGermanDate_(plus13);
+      }
+    })();
 
     Logger.log('=== PLATZHALTER BEFÜLLUNG ===');
     Logger.log('Kunde: ' + customerName);
@@ -607,6 +647,21 @@ function previewPlaceholdersForCustomer(customerName) {
         empty.push({ placeholder: placeholder, column: colName });
       }
     });
+
+    // Berechnete Platzhalter in der Vorschau anzeigen
+    (function addComputedPreview() {
+      var datumHeuteIdx = headers.indexOf('Datum_Heute');
+      var datumHeuteVal = (datumHeuteIdx !== -1) ? rowData[datumHeuteIdx] : '';
+      var baseDate = parseDateFromAny_(datumHeuteVal);
+      if (!baseDate) baseDate = new Date();
+
+      var auditDate = addBusinessDays_(baseDate, 2);
+      var auditPlus = addMonthsClamped_(auditDate, 13);
+
+      filled.push({ placeholder: '{{AUDITDATUM}}', column: '(berechnet)', value: formatGermanDate_(auditDate) });
+      filled.push({ placeholder: '{{AUDITDATUM plus 12 Monate}}', column: '(berechnet)', value: formatGermanDate_(auditPlus) });
+      filled.push({ placeholder: '{{Vorjahr}}', column: '(berechnet)', value: String(baseDate.getFullYear() - 1) });
+    })();
 
     // Dokumente zählen
     var docCount = 0;
@@ -1385,6 +1440,88 @@ function runBatchProcess(actions, customerName, date) {
 }
 
 // ===== HILFSFUNKTIONEN =====
+
+function parseDateFromAny_(value) {
+  if (value == null || value === '') return null;
+
+  if (Object.prototype.toString.call(value) === '[object Date]') {
+    if (isNaN(value.getTime())) return null;
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+
+  var s = String(value).trim();
+  if (!s) return null;
+
+  // dd.MM.yyyy
+  var m1 = s.match(/^([0-3]?\d)\.([0-1]?\d)\.(\d{4})$/);
+  if (m1) {
+    var d1 = parseInt(m1[1], 10);
+    var mo1 = parseInt(m1[2], 10) - 1;
+    var y1 = parseInt(m1[3], 10);
+    var dt1 = new Date(y1, mo1, d1);
+    if (!isNaN(dt1.getTime()) && dt1.getFullYear() === y1 && dt1.getMonth() === mo1 && dt1.getDate() === d1) return dt1;
+  }
+
+  // yyyy-MM-dd
+  var m2 = s.match(/^(\d{4})-([0-1]?\d)-([0-3]?\d)$/);
+  if (m2) {
+    var y2 = parseInt(m2[1], 10);
+    var mo2 = parseInt(m2[2], 10) - 1;
+    var d2 = parseInt(m2[3], 10);
+    var dt2 = new Date(y2, mo2, d2);
+    if (!isNaN(dt2.getTime()) && dt2.getFullYear() === y2 && dt2.getMonth() === mo2 && dt2.getDate() === d2) return dt2;
+  }
+
+  var parsed = new Date(s);
+  if (isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+}
+
+function pad2_(n) {
+  return (n < 10 ? '0' : '') + String(n);
+}
+
+function formatGermanDate_(date) {
+  var d = parseDateFromAny_(date);
+  if (!d) return '';
+  return pad2_(d.getDate()) + '.' + pad2_(d.getMonth() + 1) + '.' + d.getFullYear();
+}
+
+function addBusinessDays_(date, businessDays) {
+  var base = parseDateFromAny_(date);
+  if (!base) base = new Date();
+
+  var days = parseInt(businessDays, 10);
+  if (!isFinite(days) || days <= 0) return base;
+
+  var d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+  var added = 0;
+  while (added < days) {
+    d.setDate(d.getDate() + 1);
+    var wd = d.getDay();
+    if (wd !== 0 && wd !== 6) added++;
+  }
+  return d;
+}
+
+function addMonthsClamped_(date, months) {
+  var base = parseDateFromAny_(date);
+  if (!base) base = new Date();
+
+  var m = parseInt(months, 10);
+  if (!isFinite(m) || m === 0) return base;
+
+  var y = base.getFullYear();
+  var mo = base.getMonth() + m;
+  var day = base.getDate();
+
+  var firstOfTarget = new Date(y, mo, 1);
+  var targetYear = firstOfTarget.getFullYear();
+  var targetMonth = firstOfTarget.getMonth();
+  var lastDay = new Date(targetYear, targetMonth + 1, 0).getDate();
+
+  return new Date(targetYear, targetMonth, Math.min(day, lastDay));
+}
 
 function getDatePlus3BusinessDays() {
   var d = new Date();
