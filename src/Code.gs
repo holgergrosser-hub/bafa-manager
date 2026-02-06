@@ -80,6 +80,17 @@ const TABLE_COLUMNS = {
   ]
 };
 
+function getPlaceholderColumnsFromHeaders_(headers) {
+  var excluded = {};
+  TABLE_COLUMNS.system.concat(TABLE_COLUMNS.documents).forEach(function(c) { excluded[c] = true; });
+  return (headers || []).filter(function(col) {
+    if (!col) return false;
+    var name = String(col).trim();
+    if (!name) return false;
+    return !excluded[name];
+  });
+}
+
 // Mapping: Dokumentnamen-Prefix → Spaltenname
 const DOC_COLUMN_MAP = {
   '01': 'doc_01_Beraterbewertung',
@@ -443,7 +454,7 @@ function fillPlaceholdersForCustomer(customerName) {
 
     // Platzhalter-Werte sammeln
     var replacements = {};
-    var allPlaceholderCols = TABLE_COLUMNS.crm.concat(TABLE_COLUMNS.placeholders);
+    var allPlaceholderCols = getPlaceholderColumnsFromHeaders_(headers);
 
     allPlaceholderCols.forEach(function(colName) {
       var colIndex = headers.indexOf(colName);
@@ -581,7 +592,7 @@ function previewPlaceholdersForCustomer(customerName) {
 
     var filled = [];
     var empty  = [];
-    var allCols = TABLE_COLUMNS.crm.concat(TABLE_COLUMNS.placeholders);
+    var allCols = getPlaceholderColumnsFromHeaders_(headers);
 
     allCols.forEach(function(colName) {
       var colIndex = headers.indexOf(colName);
@@ -1048,16 +1059,18 @@ function analyzeWithAI(freeText, companyName) {
       throw new Error('Claude API-Key fehlt! Bitte über Menü "🔑 Claude Key einrichten" setzen.');
     }
 
-    // Alle verfügbaren Platzhalter-Spalten
-    var allColumns = TABLE_COLUMNS.crm.concat(TABLE_COLUMNS.placeholders);
-
     // Bestehende Werte laden falls vorhanden
     var existingValues = {};
+    var allColumns = TABLE_COLUMNS.crm.concat(TABLE_COLUMNS.placeholders);
     try {
       var sheet = getCustomerSheet();
       var data = sheet.getDataRange().getValues();
       var headers = data[0];
       var companyCol = headers.indexOf('companyName');
+
+      // Dynamisch: alle (nicht-System / nicht-Dokument) Spalten als Platzhalter anbieten
+      allColumns = getPlaceholderColumnsFromHeaders_(headers);
+
       for (var i = 1; i < data.length; i++) {
         if (data[i][companyCol] === companyName) {
           allColumns.forEach(function(col) {
@@ -1087,6 +1100,7 @@ function analyzeWithAI(freeText, companyName) {
       'Geltungsbereich': 'Geltungsbereich der Zertifizierung (Branche/Tätigkeit)',
       'Zielgruppe_Zielgebiet': 'Zielgruppe und Zielgebiet des Unternehmens',
       'Ausgelagerte_Prozesse': 'Ausgelagerte Prozesse (z.B. Buchhaltung, IT)',
+      'Datensicherung': 'Datensicherung / Backup (z.B. täglich, wöchentlich, Cloud/Server, Verantwortliche)',
       'Norm': 'ISO-Norm (z.B. ISO 9001:2015)',
       'AUDITOR': 'Name des Auditors',
       'Aktuelles_Jahr': 'Aktuelles Jahr (automatisch)',
