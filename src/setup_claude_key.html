@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+  <head>
+    <base target="_top" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Claude API-Key einrichten</title>
+    <style>
+      body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#f9fafb;color:#111827}
+      .wrap{max-width:560px;margin:0 auto;padding:20px}
+      .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+      h1{font-size:18px;margin:0 0 8px}
+      p{margin:8px 0;color:#374151;font-size:13px;line-height:1.4}
+      label{display:block;margin-top:12px;font-size:13px;font-weight:600;color:#111827}
+      input{width:100%;box-sizing:border-box;margin-top:6px;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:14px}
+      .row{display:flex;gap:10px;align-items:center;margin-top:14px}
+      button{appearance:none;border:0;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
+      .primary{background:#2563eb;color:#fff}
+      .primary:disabled{opacity:.5;cursor:not-allowed}
+      .muted{background:#f3f4f6;color:#111827}
+      .status{margin-top:10px;font-size:12px}
+      .ok{color:#065f46}
+      .err{color:#991b1b}
+      .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>🔑 Claude API-Key einrichten</h1>
+        <p>
+          Der Key wird in den Script Properties gespeichert und nicht im Sheet.
+          Format: <span class="mono">sk-ant-...</span>
+        </p>
+        <div id="current" class="status"></div>
+
+        <label for="key">Claude API-Key</label>
+        <input id="key" type="password" placeholder="sk-ant-..." autocomplete="off" />
+
+        <div class="row">
+          <button id="save" class="primary" onclick="saveKey()">Speichern</button>
+          <button class="muted" onclick="refreshStatus()">Status neu laden</button>
+        </div>
+
+        <div id="msg" class="status"></div>
+      </div>
+    </div>
+
+    <script>
+      function setMsg(text, kind) {
+        const el = document.getElementById('msg')
+        el.className = 'status ' + (kind || '')
+        el.textContent = text || ''
+      }
+
+      function setCurrent(text, kind) {
+        const el = document.getElementById('current')
+        el.className = 'status ' + (kind || '')
+        el.textContent = text || ''
+      }
+
+      function refreshStatus() {
+        setCurrent('Lade Status...', '')
+        google.script.run
+          .withSuccessHandler((s) => {
+            if (s && s.set) {
+              setCurrent('Key ist gesetzt (…' + (s.tail || '') + ')', 'ok')
+            } else {
+              setCurrent('Key ist noch nicht gesetzt', 'err')
+            }
+          })
+          .withFailureHandler((e) => {
+            setCurrent('Status konnte nicht geladen werden: ' + (e && e.message ? e.message : e), 'err')
+          })
+          .getClaudeApiKeyStatus_()
+      }
+
+      function saveKey() {
+        const btn = document.getElementById('save')
+        const key = (document.getElementById('key').value || '').trim()
+        if (!key) {
+          setMsg('Bitte Key eingeben.', 'err')
+          return
+        }
+
+        btn.disabled = true
+        setMsg('Speichere...', '')
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            setMsg('✅ Gespeichert (…' + (res && res.tail ? res.tail : '') + ')', 'ok')
+            document.getElementById('key').value = ''
+            refreshStatus()
+          })
+          .withFailureHandler((e) => {
+            setMsg('❌ Fehler: ' + (e && e.message ? e.message : e), 'err')
+          })
+          .setClaudeApiKey_(key)
+          
+        setTimeout(() => { btn.disabled = false }, 250)
+      }
+
+      refreshStatus()
+    </script>
+  </body>
+</html>

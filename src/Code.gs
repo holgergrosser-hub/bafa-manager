@@ -120,11 +120,36 @@ const PLACEHOLDER_ALIAS = {
 
 // ===== WEB APP =====
 
-function doGet() {
+function doGet(e) {
+  var page = e && e.parameter ? String(e.parameter.page || '') : '';
+  if (page === 'setup-claude-key') {
+    return HtmlService.createHtmlOutputFromFile('setup_claude_key')
+      .setTitle('Claude API-Key einrichten')
+      .setWidth(600)
+      .setHeight(520);
+  }
+
   return HtmlService.createHtmlOutputFromFile('index')
-      .setTitle('BAFA Dokumente erstellen')
-      .setWidth(1200)
-      .setHeight(800);
+    .setTitle('BAFA Dokumente erstellen')
+    .setWidth(1200)
+    .setHeight(800);
+}
+
+function getClaudeApiKeyStatus_() {
+  var key = PropertiesService.getScriptProperties().getProperty('CLAUDE_API_KEY');
+  return {
+    set: !!key,
+    tail: key ? String(key).slice(-8) : ''
+  };
+}
+
+function setClaudeApiKey_(key) {
+  var k = (key == null) ? '' : String(key).trim();
+  if (!k) throw new Error('Key fehlt');
+  if (k.indexOf('sk-ant-') !== 0) throw new Error('Ungültiger Key (muss mit sk-ant- beginnen)');
+
+  PropertiesService.getScriptProperties().setProperty('CLAUDE_API_KEY', k);
+  return { success: true, tail: k.slice(-8) };
 }
 
 // ===== KUNDENTABELLE ERSTELLEN =====
@@ -1147,19 +1172,30 @@ function saveAIAssignments(companyName, confirmedData) {
  * Claude API-Key einrichten
  */
 function setupClaudeApiKey() {
-  var ui = SpreadsheetApp.getUi();
-  var existing = PropertiesService.getScriptProperties().getProperty('CLAUDE_API_KEY');
-  var msg = existing ? 'Key ist gesetzt (sk-ant-...' + existing.slice(-8) + ')\nNeuen Key eingeben oder Cancel:' : 'Claude API-Key eingeben (sk-ant-...):';
+  try {
+    var ui = SpreadsheetApp.getUi();
+    var existing = PropertiesService.getScriptProperties().getProperty('CLAUDE_API_KEY');
+    var msg = existing
+      ? 'Key ist gesetzt (sk-ant-...' + existing.slice(-8) + ')\nNeuen Key eingeben oder Cancel:'
+      : 'Claude API-Key eingeben (sk-ant-...):';
 
-  var response = ui.prompt('🔑 Claude API-Key', msg, ui.ButtonSet.OK_CANCEL);
-  if (response.getSelectedButton() === ui.Button.OK) {
-    var key = response.getResponseText().trim();
-    if (key && key.startsWith('sk-ant-')) {
-      PropertiesService.getScriptProperties().setProperty('CLAUDE_API_KEY', key);
+    var response = ui.prompt('🔑 Claude API-Key', msg, ui.ButtonSet.OK_CANCEL);
+    if (response.getSelectedButton() === ui.Button.OK) {
+      var key = response.getResponseText().trim();
+      setClaudeApiKey_(key);
       ui.alert('✅ Claude Key gespeichert!');
-    } else {
-      ui.alert('❌ Ungültiger Key (muss mit sk-ant- beginnen)');
     }
+  } catch (e) {
+    var url = '';
+    try {
+      url = ScriptApp.getService().getUrl();
+    } catch (_) {
+      url = '';
+    }
+    var hint = url
+      ? ('Öffne diese URL im Browser: ' + url + '?page=setup-claude-key')
+      : 'Diese Funktion braucht einen UI-Kontext. Bitte über die Web-App Setup-Seite setzen (?page=setup-claude-key).';
+    throw new Error('Cannot call SpreadsheetApp.getUi() from this context. ' + hint);
   }
 }
 
