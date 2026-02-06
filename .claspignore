@@ -19,3 +19,6 @@ SCHNELLSTART.md
 BEST_PRACTICES.md
 BAFA_Entwicklungskonzept.md
 tests/**
+
+# Local scripts
+scripts/**
