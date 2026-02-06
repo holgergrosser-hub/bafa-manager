@@ -13,6 +13,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+
       - run: npm ci
       - run: npm run lint
       - run: npm test
@@ -28,8 +29,10 @@ jobs:
             echo "Missing CLASP_TOKEN secret" >&2
             exit 1
           fi
-          mkdir -p ~/.config
           echo "$CLASP_TOKEN" > ~/.clasprc.json
 
       - name: Push to Apps Script
         run: clasp push --force
+
+      - name: Create new version (deploy)
+        run: clasp deploy --description "CI ${GITHUB_SHA}"
