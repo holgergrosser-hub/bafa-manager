@@ -903,6 +903,14 @@ function importFromCrm(companyName) {
       importedValues[targetCol] = cellValue ? cellValue.toString().trim() : '';
     }
 
+    
+    var plzCandidate = importedValues['Ansprechpartner'] || '';
+    var ortCandidate = importedValues['PLZ_Ort'] || '';
+    if (/^\d{4,5}$/.test(plzCandidate) && ortCandidate && !/\d/.test(ortCandidate)) {
+      importedValues['PLZ_Ort'] = (plzCandidate + ' ' + ortCandidate).trim();
+      importedValues['Ansprechpartner'] = '';
+    }
+
     Logger.log('CRM-Daten: ' + JSON.stringify(importedValues));
 
     // 3. In BAFA Kundentabelle schreiben
